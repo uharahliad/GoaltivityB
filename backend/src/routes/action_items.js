@@ -128,8 +128,8 @@ router.put(
   '/:id',
   wrapAsync(async (req, res) => {
     await Action_itemsService.update(
-      req.body.data,
-      req.body.id,
+      req.body,
+      req.params.id,
       req.currentUser,
     );
     const payload = true;
@@ -206,9 +206,9 @@ router.delete(
  */
 
 router.get(
-  '/',
+  '/:goal',
   wrapAsync(async (req, res) => {
-    const payload = await Action_itemsDBApi.findAll(req.query);
+    const payload = await Action_itemsDBApi.findAll(req.params);
 
     res.status(200).send(payload);
   }),

@@ -16,13 +16,12 @@ module.exports = class Goal_categoriesDBApi {
         id: data.id || undefined,
 
         name: data.name || null,
-        importHash: data.importHash || null,
+        importHash: null,
         createdById: currentUser.id,
         updatedById: currentUser.id,
       },
       { transaction },
     );
-
     return goal_categories;
   }
 
@@ -71,14 +70,13 @@ module.exports = class Goal_categoriesDBApi {
     const transaction = (options && options.transaction) || undefined;
 
     const goal_categories = await db.goal_categories.findOne(
-      { where },
+      where,
       { transaction },
     );
 
     if (!goal_categories) {
       return goal_categories;
     }
-
     const output = goal_categories.get({ plain: true });
 
     return output;

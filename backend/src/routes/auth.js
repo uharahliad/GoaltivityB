@@ -5,6 +5,7 @@ const config = require('../config');
 const AuthService = require('../services/auth');
 const ForbiddenError = require('../services/notifications/errors/forbidden');
 const EmailSender = require('../services/email');
+const Accountability_groupsDBApi = require('../db/api/accountability_groups');
 const wrapAsync = require('../helpers').wrapAsync;
 
 const router = express.Router();
@@ -180,10 +181,13 @@ router.post(
     const payload = await AuthService.signup(
       req.body.email,
       req.body.password,
+      req.body.firstName,
+      req.body.lastName,
+      req.body.phoneNumber,
       req,
       req.protocol + '://' + req.hostname + config.portUIProd,
     );
-    res.status(200).send(payload);
+    res.status(200).send({token: payload, email: req.body.email, firstName: req.body.firstName, lastName: req.body.lastName, phoneNumber: req.body.phoneNumber});
   }),
 );
 
@@ -254,6 +258,14 @@ router.get(
     socialRedirect(res, req.query.state, req.user.token, config);
   },
 );
+
+// router.get('/test',
+//   wrapAsync(async (req, res) => {
+//     const payload = await Accountability_groupsDBApi.addUserToGroup({id: 'af5a87be-8f9c-4630-902a-37a60b7005ba', email: 'john@doe.com'}, 'AllUsersGroup')
+//     // console.log(payload, '111111111111111111111')
+//     res.status(200).send(payload);
+//   }), 
+// )
 
 router.use('/', require('../helpers').commonErrorHandler);
 

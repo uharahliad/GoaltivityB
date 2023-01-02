@@ -10,6 +10,7 @@ const db = require('./db/models');
 const config = require('./config');
 const swaggerUI = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
+require('dotenv').config()
 
 const authRoutes = require('./routes/auth');
 const fileRoutes = require('./routes/file');
@@ -27,6 +28,8 @@ const action_itemsRoutes = require('./routes/action_items');
 const accountability_groupsRoutes = require('./routes/accountability_groups');
 
 const messagesRoutes = require('./routes/messages');
+
+const Twilio = require('twilio');
 
 const options = {
   definition: {
@@ -127,6 +130,29 @@ app.use(
   messagesRoutes,
 );
 
+const AccessToken = Twilio.jwt.AccessToken;
+const ChatGrant = AccessToken.ChatGrant;
+
+app.get('/token/:identity', (req, res) => {
+  const identity = req.params.identity;
+  const token = new AccessToken(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_API_KEY,
+    process.env.TWILIO_API_SECRET,
+  );
+
+  token.identity = identity;
+  token.addGrant(
+    new ChatGrant({
+      serviceSid: process.env.TWILIO_CHAT_SERVICE_SID,
+    }),
+  );
+  res.send({
+    identity: token.identity,
+    jwt: token.toJwt(),
+  });
+});
+
 const publicDir = path.join(__dirname, '../public');
 
 if (fs.existsSync(publicDir)) {
@@ -140,7 +166,7 @@ if (fs.existsSync(publicDir)) {
 const PORT = process.env.PORT || 8080;
 
 db.sequelize.sync().then(function () {
-  app.listen(PORT, () => {
+  app.listen(PORT,'localhost', () => {
     console.log(`Listening on port ${PORT}`);
   });
 });

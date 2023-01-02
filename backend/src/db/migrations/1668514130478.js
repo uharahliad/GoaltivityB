@@ -215,6 +215,56 @@ module.exports = {
       );
 
       await queryInterface.createTable(
+        'accountability_groupsUsersUsers',
+        {
+          id: {
+            type: Sequelize.DataTypes.UUID,
+            defaultValue: Sequelize.DataTypes.UUIDV4,
+            primaryKey: true,
+          },
+          accountability_group: {
+            type: Sequelize.DataTypes.UUID,
+            defaultValue: Sequelize.DataTypes.UUIDV4,
+            references: {
+              key: 'id',
+              model: 'accountability_groups',
+            },
+          },
+          userId: {
+            type: Sequelize.DataTypes.UUID,
+            defaultValue: Sequelize.DataTypes.UUIDV4,
+            references: {
+              key: 'id',
+              model: 'users',
+            },
+          },
+          createdById: {
+            type: Sequelize.DataTypes.UUID,
+            references: {
+              key: 'id',
+              model: 'users',
+            },
+          },
+          updatedById: {
+            type: Sequelize.DataTypes.UUID,
+            references: {
+              key: 'id',
+              model: 'users',
+            },
+          },
+          createdAt: { type: Sequelize.DataTypes.DATE },
+          updatedAt: { type: Sequelize.DataTypes.DATE },
+          deletedAt: { type: Sequelize.DataTypes.DATE },
+          importHash: {
+            type: Sequelize.DataTypes.STRING(255),
+            allowNull: true,
+            unique: true,
+          },
+        },
+        { transaction },
+      );
+
+      await queryInterface.createTable(
         'messages',
         {
           id: {
@@ -384,6 +434,42 @@ module.exports = {
 
       await queryInterface.addColumn(
         'goals',
+        'reason',
+        {
+          type: Sequelize.DataTypes.TEXT,
+        },
+        { transaction },
+      );
+
+      await queryInterface.addColumn(
+        'goals',
+        'status',
+        {
+          type: Sequelize.DataTypes.TEXT,
+        },
+        { transaction },
+      );
+
+      await queryInterface.addColumn(
+        'goals',
+        'start_date',
+        {
+          type: Sequelize.DataTypes.DATE,
+        },
+        { transaction },
+      );
+
+      await queryInterface.addColumn(
+        'goals',
+        'end_date',
+        {
+          type: Sequelize.DataTypes.DATE,
+        },
+        { transaction },
+      );
+
+      await queryInterface.addColumn(
+        'goals',
         'categoryId',
         {
           type: Sequelize.DataTypes.UUID,
@@ -468,6 +554,15 @@ module.exports = {
       await queryInterface.addColumn(
         'action_items',
         'status',
+        {
+          type: Sequelize.DataTypes.TEXT,
+        },
+        { transaction },
+      );
+
+      await queryInterface.addColumn(
+        'action_items',
+        'week',
         {
           type: Sequelize.DataTypes.TEXT,
         },
@@ -578,6 +673,12 @@ module.exports = {
       await queryInterface.removeColumn('goals', 'categoryId', { transaction });
 
       await queryInterface.removeColumn('goals', 'name', { transaction });
+
+      await queryInterface.removeColumn('goals', 'reason', { transaction });
+
+      await queryInterface.removeColumn('goals', 'start_date', { transaction });
+
+      await queryInterface.removeColumn('goals', 'end_date', { transaction });
 
       await queryInterface.removeColumn('users', 'provider', { transaction });
 

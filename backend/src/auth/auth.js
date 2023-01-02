@@ -26,7 +26,6 @@ passport.use(
         }
 
         req.currentUser = user;
-
         return done(null, user);
       } catch (error) {
         done(error);

@@ -109,11 +109,11 @@ module.exports = class UsersDBApi {
     return users;
   }
 
-  static async remove(id, options) {
+  static async remove(email, options) {
     const currentUser = (options && options.currentUser) || { id: null };
     const transaction = (options && options.transaction) || undefined;
 
-    const users = await db.users.findByPk(id, options);
+    const users = await db.users.findOne({where: {email}});
 
     await users.update(
       {
@@ -127,6 +127,8 @@ module.exports = class UsersDBApi {
     await users.destroy({
       transaction,
     });
+
+    await db.sequelize.query(`DELETE FROM "accountability_groupsUsersUsers" WHERE "accountability_groupsUsersUsers"."userId" = '${users.id}'`)
 
     return users;
   }
@@ -145,7 +147,6 @@ module.exports = class UsersDBApi {
     output.avatar = await users.getAvatar({
       transaction,
     });
-
     return output;
   }
 

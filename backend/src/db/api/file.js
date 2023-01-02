@@ -15,7 +15,6 @@ module.exports = class FileDBApi {
     } else {
       files = rawFiles ? [rawFiles] : [];
     }
-
     await this._removeLegacyFiles(relation, files, options);
     await this._addFiles(relation, files, options);
   }
@@ -25,7 +24,6 @@ module.exports = class FileDBApi {
     const currentUser = (options && options.currentUser) || { id: null };
 
     const inexistentFiles = files.filter((file) => !!file.new);
-
     for (const file of inexistentFiles) {
       await db.file.create(
         {

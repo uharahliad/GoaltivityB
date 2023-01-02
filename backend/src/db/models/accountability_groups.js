@@ -35,7 +35,7 @@ module.exports = function (sequelize, DataTypes) {
     db.accountability_groups.belongsToMany(db.users, {
       as: 'users',
       foreignKey: {
-        name: 'accountability_groups_usersId',
+        name: 'userId',
       },
       constraints: false,
       through: 'accountability_groupsUsersUsers',

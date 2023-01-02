@@ -101,6 +101,9 @@ module.exports = function (sequelize, DataTypes) {
         belongsToColumn: 'avatar',
       },
     });
+    db.users.belongsToMany(db.accountability_groups, {
+      through: 'accountability_groupsUsersUsers',
+    })
 
     db.users.belongsTo(db.users, {
       as: 'createdBy',

@@ -2,6 +2,9 @@ const db = require('../models');
 const FileDBApi = require('./file');
 const crypto = require('crypto');
 const Utils = require('../utils');
+const twilio = require('twilio')
+const client = new twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const uuid = require('uuid')
 
 const Sequelize = db.Sequelize;
 const Op = Sequelize.Op;
@@ -10,10 +13,11 @@ module.exports = class Accountability_groupsDBApi {
   static async create(data, options) {
     const currentUser = (options && options.currentUser) || { id: null };
     const transaction = (options && options.transaction) || undefined;
+    console.log(data)
 
     const accountability_groups = await db.accountability_groups.create(
       {
-        id: data.id || undefined,
+        id: undefined,
 
         name: data.name || null,
         importHash: data.importHash || null,
@@ -22,10 +26,11 @@ module.exports = class Accountability_groupsDBApi {
       },
       { transaction },
     );
-
-    await accountability_groups.setUsers(data.users || [], {
+    await Promise.all(options.allUsers.map(async user => await accountability_groups.setUsers(user.id, {
       transaction,
-    });
+    })));
+
+    await client.conversations.v1.conversations.create({friendlyName: data.name, uniqueName: data.name})
 
     return accountability_groups;
   }
@@ -51,6 +56,45 @@ module.exports = class Accountability_groupsDBApi {
     });
 
     return accountability_groups;
+  }
+
+  static async addUserToGroup(user, group) {
+    const transaction = await db.sequelize.transaction();
+    
+    const accountability_group = await db.accountability_groups.findOne(
+      { where: {name: group}, include: {association: 'users'} },
+      { transaction },
+      );
+    await db.sequelize.query(`INSERT INTO "accountability_groupsUsersUsers" ("createdAt","updatedAt","userId","accountability_group","id") VALUES ('${(new Date()).toLocaleDateString()}','${(new Date()).toLocaleDateString()}','${user.id}','${accountability_group.dataValues.id}','${uuid.v4()}') RETURNING "createdAt","updatedAt","userId","accountability_group","id"`);
+    const conversation = await client.conversations.v1.conversations(accountability_group.name).fetch()
+    if (conversation) {
+      const participants = await client.conversations.v1.conversations(accountability_group.name).participants.list()
+      if (participants.length !== 0) {
+        await client.conversations.v1.conversations(accountability_group.name).participants.create({identity: user.email})
+      } else {
+        const groupUsers = await db.sequelize.query(`SELECT email FROM "users" LEFT JOIN "accountability_groupsUsersUsers" ON "accountability_groupsUsersUsers"."userId" = "users"."id"`)
+        console.log(groupUsers[0])
+        await Promise.all(groupUsers[0].map(async item => await client.conversations.v1.conversations(accountability_group.name).participants.create({identity: item.email})))
+      }
+    }
+    return accountability_group;
+  }
+
+  static async addUsersToGroup(users, group) {
+    const transaction = await db.sequelize.transaction();
+    
+    const accountability_group = await db.accountability_groups.findOne(
+      { where: {name: group}, include: {association: 'users'} },
+      { transaction },
+      );
+    await Promise.all(users.map(async user => await db.sequelize.query(`INSERT INTO "accountability_groupsUsersUsers" ("createdAt","updatedAt","userId","accountability_group") VALUES ('${(new Date()).toLocaleDateString()}','${(new Date()).toLocaleDateString()}','${user}','${accountability_group.dataValues.id}') RETURNING "createdAt","updatedAt","userId","accountability_group"`)))
+    const conversation = await client.conversations.v1.conversations(accountability_group.name).fetch()
+    if (conversation) {
+      await Promise.all(users.map(async user => await client.conversations.v1.conversations(accountability_group.name).participants.create({identity: user.email})))
+    } else {
+      return 'no conversation'
+    }
+    return accountability_group;
   }
 
   static async remove(id, options) {
@@ -99,10 +143,26 @@ module.exports = class Accountability_groupsDBApi {
     return output;
   }
 
+  static async findAllByUserId(userId) {
+    const transaction = await db.sequelize.transaction();
+    
+    const accountability_groups = await db.sequelize.query(`SELECT * from "accountability_groups"
+    LEFT JOIN "accountability_groupsUsersUsers" ON "accountability_groupsUsersUsers"."accountability_group" = "accountability_groups"."id"
+    WHERE "accountability_groupsUsersUsers"."userId" = '${userId}'
+    `)
+    const accountability_groupsData = await Promise.all(accountability_groups[0].map(async group => {
+      const users = await db.sequelize.query(`SELECT "userId","firstName","email" from "accountability_groupsUsersUsers" LEFT JOIN "users" ON "users"."id" = "accountability_groupsUsersUsers"."userId" WHERE "accountability_groupsUsersUsers"."accountability_group" = '${group.accountability_group}'`)
+      return {group, users}
+    }))
+
+    return accountability_groupsData
+  }
+
   static async findAll(filter, options) {
     var limit = filter.limit || 0;
     var offset = 0;
     const currentPage = +filter.page;
+    console.log(filter)
 
     offset = currentPage * limit;
 
@@ -114,16 +174,18 @@ module.exports = class Accountability_groupsDBApi {
       {
         model: db.users,
         as: 'users',
-        through: filter.users
-          ? {
-              where: {
-                [Op.or]: filter.users.split('|').map((item) => {
-                  return { ['Id']: Utils.uuid(item) };
-                }),
-              },
-            }
-          : null,
-        required: filter.users ? true : null,
+        through: 'accountability_groupsUsersUsers',
+        where: {id: filter.user.accountability_groups_usersId},
+        // through: filter.users
+        //   ? {
+        //       where: {
+        //         [Op.or]: filter.users.split('|').map((item) => {
+        //           return { ['Id']: Utils.uuid(item) };
+        //         }),
+        //       },
+        //     }
+        //   : null,
+        // required: filter.users ? true : null,
       },
     ];
 
@@ -191,11 +253,11 @@ module.exports = class Accountability_groupsDBApi {
           : [['createdAt', 'desc']],
       transaction,
     });
-
-    //    rows = await this._fillWithRelationsAndFilesForRows(
-    //      rows,
-    //      options,
-    //    );
+    console.log(rows)
+      //  rows = await this._fillWithRelationsAndFilesForRows(
+      //    rows,
+      //    options,
+      //  );
 
     return { rows, count };
   }

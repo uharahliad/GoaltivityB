@@ -8,26 +8,64 @@ const Op = Sequelize.Op;
 
 module.exports = class Success_criteriaDBApi {
   static async create(data, options) {
-    const currentUser = (options && options.currentUser) || { id: null };
+    const currentUser = options ? options.user : { id: null };
     const transaction = (options && options.transaction) || undefined;
 
+    const success_criteria_list = await Promise.all(data.map(async item => {
+      const success_criteria = await db.success_criteria.create(
+        {
+          id: data.id || undefined,
+  
+          name: item.value || null,
+          importHash: data.importHash || null,
+          createdById: currentUser.id,
+          updatedById: currentUser.id,
+        },
+        { transaction },
+      );
+      await success_criteria.setGoal(options.goal.id || null, {
+        transaction,
+      });
+      return success_criteria
+    }))
+
+    // const success_criteria = await db.success_criteria.create(
+    //   {
+    //     id: data.id || undefined,
+
+    //     name: data.value || null,
+    //     importHash: data.importHash || null,
+    //     createdById: currentUser.id,
+    //     updatedById: currentUser.id,
+    //   },
+    //   { transaction },
+    // );
+
+    // await success_criteria.setGoal(data.goal || null, {
+    //   transaction,
+    // });
+
+    return success_criteria_list;
+  }
+
+  static async createOne(data, options) {
+    const currentUser = options ? options.currentUser : { id: null };
+    const transaction = (options && options.transaction) || undefined;
     const success_criteria = await db.success_criteria.create(
       {
         id: data.id || undefined,
 
-        name: data.name || null,
+        name: data.criteria || null,
         importHash: data.importHash || null,
         createdById: currentUser.id,
         updatedById: currentUser.id,
       },
       { transaction },
     );
-
     await success_criteria.setGoal(data.goal || null, {
       transaction,
     });
-
-    return success_criteria;
+    return success_criteria
   }
 
   static async update(id, data, options) {
@@ -46,7 +84,7 @@ module.exports = class Success_criteriaDBApi {
       { transaction },
     );
 
-    await success_criteria.setGoal(data.goal || null, {
+    await success_criteria.setGoal(data.goalId || null, {
       transaction,
     });
 
@@ -94,6 +132,29 @@ module.exports = class Success_criteriaDBApi {
     });
 
     return output;
+  }
+
+  static async findAllByGoalId(where, options) {
+    const transaction = (options && options.transaction) || undefined;
+
+    const success_criteria = await db.success_criteria.findAll(
+      { where },
+      { transaction },
+    );
+
+    // console.log(success_criteria)
+
+    // if (!success_criteria) {
+    //   return success_criteria;
+    // }
+
+    // const output = success_criteria.get({ plain: true });
+
+    // output.goal = await success_criteria.getGoal({
+    //   transaction,
+    // });
+
+    return success_criteria;
   }
 
   static async findAll(filter, options) {

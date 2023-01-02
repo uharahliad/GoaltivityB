@@ -4,6 +4,7 @@ const Accountability_groupsService = require('../services/accountability_groups'
 const Accountability_groupsDBApi = require('../db/api/accountability_groups');
 const wrapAsync = require('../helpers').wrapAsync;
 
+
 const router = express.Router();
 
 /**
@@ -134,6 +135,23 @@ router.put(
   }),
 );
 
+router.put(
+  '/addUsersToGroup/:id',
+  wrapAsync(async (req, res) => {
+    if (!req.currentUser || !req.currentUser.id) {
+      throw new ForbiddenError();
+    }
+
+    await Accountability_groupsService.update(
+      req.body.data,
+      req.params.id,
+      req.currentUser,
+    );
+    const payload = true;
+    res.status(200).send(payload);
+  }),
+);
+
 /**
  * @swagger
  *  /api/accountability_groups/{id}:
@@ -207,6 +225,25 @@ router.get(
   wrapAsync(async (req, res) => {
     const payload = await Accountability_groupsDBApi.findAll(req.query);
 
+    res.status(200).send(payload);
+  }),
+);
+
+router.get(
+  '/all',
+  wrapAsync(async (req, res) => {
+    // const payload = await Accountability_groupsDBApi.findBy({users: [req.currentUser]})
+    console.log(req.currentUser.id, '//////////////////////////')
+    const payload = await Accountability_groupsDBApi.findAllByUserId(req.currentUser.id);
+    console.log(payload)
+    res.status(200).send(payload);
+  }),
+);
+
+router.get(
+  '/add',
+  wrapAsync(async (req, res) => {
+    const payload = await Accountability_groupsDBApi.addUser();
     res.status(200).send(payload);
   }),
 );

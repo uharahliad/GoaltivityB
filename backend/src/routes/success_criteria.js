@@ -72,6 +72,17 @@ router.post('/', async (req, res) => {
   res.status(200).send(payload);
 });
 
+router.post('/one', async (req, res) => {
+  await Success_criteriaService.createOne(
+    req.body,
+    req.currentUser,
+    true,
+    req.headers.referer,
+  );
+  const payload = true;
+  res.status(200).send(payload);
+});
+
 /**
  *  @swagger
  *  /api/success_criteria/{id}:
@@ -170,6 +181,7 @@ router.put(
 router.delete(
   '/:id',
   wrapAsync(async (req, res) => {
+    // console.log(req.params.id,0000000000000000000000)
     await Success_criteriaService.remove(req.params.id, req.currentUser);
     const payload = true;
     res.status(200).send(payload);
@@ -257,6 +269,15 @@ router.get(
   '/:id',
   wrapAsync(async (req, res) => {
     const payload = await Success_criteriaDBApi.findBy({ id: req.params.id });
+
+    res.status(200).send(payload);
+  }),
+);
+
+router.get(
+  '/goal/:id',
+  wrapAsync(async (req, res) => {
+    const payload = await Success_criteriaDBApi.findAllByGoalId({ goalId: req.params.id });
 
     res.status(200).send(payload);
   }),

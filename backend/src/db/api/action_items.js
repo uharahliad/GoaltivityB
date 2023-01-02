@@ -14,7 +14,7 @@ module.exports = class Action_itemsDBApi {
     const action_items = await db.action_items.create(
       {
         id: data.id || undefined,
-
+        week: data.week || null,
         name: data.name || null,
         status: data.status || null,
         importHash: data.importHash || null,
@@ -43,6 +43,7 @@ module.exports = class Action_itemsDBApi {
       {
         name: data.name || null,
         status: data.status || null,
+        week: data.week || null,
         updatedById: currentUser.id,
       },
       { transaction },

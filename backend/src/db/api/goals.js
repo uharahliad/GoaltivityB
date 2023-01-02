@@ -8,27 +8,32 @@ const Op = Sequelize.Op;
 
 module.exports = class GoalsDBApi {
   static async create(data, options) {
-    const currentUser = (options && options.currentUser) || { id: null };
+    const currentUser = options ? options.user : { id: null };
     const transaction = (options && options.transaction) || undefined;
 
     const goals = await db.goals.create(
       {
         id: data.id || undefined,
-
+        status: data.status || undefined,
         name: data.name || null,
         award: data.award || null,
+        reason: data.reason || null,
+        start_date: data.startDate || null,
+        end_date: data.endDate || null,
         importHash: data.importHash || null,
         createdById: currentUser.id,
         updatedById: currentUser.id,
       },
       { transaction },
     );
+    
+    await goals.setCategory(options.goalCategory.id, {transaction})
 
-    await goals.setCategory(data.category || null, {
-      transaction,
-    });
+    // await goals.setCategory(data.category || null, {
+    //   transaction,
+    // });
 
-    await goals.setAuthor(data.author || null, {
+    await goals.setAuthor(currentUser.id || null, {
       transaction,
     });
 
@@ -46,17 +51,21 @@ module.exports = class GoalsDBApi {
     await goals.update(
       {
         name: data.name || null,
+        status: data.status || '0',
         award: data.award || null,
+        reason: data.reason || null,
+        start_date: data.startDate || null,
+        end_date: data.endDate || null,
         updatedById: currentUser.id,
       },
       { transaction },
     );
 
-    await goals.setCategory(data.category || null, {
+    await goals.setCategory(options.goalCategory.id || null, {
       transaction,
     });
 
-    await goals.setAuthor(data.author || null, {
+    await goals.setAuthor(currentUser.id || null, {
       transaction,
     });
 
@@ -228,7 +237,6 @@ module.exports = class GoalsDBApi {
     //      rows,
     //      options,
     //    );
-
     return { rows, count };
   }
 

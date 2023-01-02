@@ -9,10 +9,10 @@ const ids = [
 ];
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
+  up: async (queryInterface, Sequelize) => {
     let hash = bcrypt.hashSync(config.admin_pass, config.bcrypt.saltRounds);
 
-    return queryInterface.bulkInsert('users', [
+    queryInterface.bulkInsert('users', [
       {
         id: ids[0],
         firstName: 'Admin',

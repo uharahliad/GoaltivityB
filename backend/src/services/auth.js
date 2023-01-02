@@ -8,9 +8,10 @@ const PasswordResetEmail = require('./email/list/passwordReset');
 const EmailSender = require('./email');
 const config = require('../config');
 const helpers = require('../helpers');
+const Accountability_groupsDBApi = require('../db/api/accountability_groups');
 
 class Auth {
-  static async signup(email, password, options = {}, host) {
+  static async signup(email, password, firstName, lastName, phoneNumber, options = {}, host) {
     const user = await UsersDBApi.findBy({ email });
 
     const hashedPassword = await bcrypt.hash(
@@ -29,10 +30,9 @@ class Auth {
 
       await UsersDBApi.updatePassword(user.id, hashedPassword, options);
 
-      if (EmailSender.isConfigured) {
-        await this.sendEmailAddressVerificationEmail(user.email, host);
-      }
-
+      // if (EmailSender.isConfigured) {
+      //   await this.sendEmailAddressVerificationEmail(user.email, host);
+      // }
       const data = {
         user: {
           id: user.id,
@@ -45,16 +45,17 @@ class Auth {
 
     const newUser = await UsersDBApi.createFromAuth(
       {
-        firstName: email.split('@')[0],
+        firstName: firstName,
         password: hashedPassword,
         email: email,
+        phoneNumber: phoneNumber,
+        lastName: lastName,
       },
       options,
     );
-
-    if (EmailSender.isConfigured) {
-      await this.sendEmailAddressVerificationEmail(newUser.email, host);
-    }
+    // if (EmailSender.isConfigured) {
+    //   await this.sendEmailAddressVerificationEmail(newUser.email, host);
+    // }
 
     const data = {
       user: {
@@ -62,13 +63,14 @@ class Auth {
         email: newUser.email,
       },
     };
-
-    return helpers.jwtSign(data);
+    const token = helpers.jwtSign(data);
+    const addToAllGroup = await Accountability_groupsDBApi.addUserToGroup({id: newUser.id, email: newUser.email}, 'AllUsersGroup')
+    return {...user, token}
   }
 
   static async signin(email, password, options = {}) {
     const user = await UsersDBApi.findBy({ email });
-
+    console.log(user)
     if (!user) {
       throw new ValidationError('auth.userNotFound');
     }
@@ -81,16 +83,15 @@ class Auth {
       throw new ValidationError('auth.wrongPassword');
     }
 
-    if (!EmailSender.isConfigured) {
-      user.emailVerified = true;
-    }
+    // if (!EmailSender.isConfigured) {
+    //   user.emailVerified = true;
+    // }
 
-    if (!user.emailVerified) {
-      throw new ValidationError('auth.userNotVerified');
-    }
+    // if (!user.emailVerified) {
+    //   throw new ValidationError('auth.userNotVerified');
+    // }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
-
     if (!passwordsMatch) {
       throw new ValidationError('auth.wrongPassword');
     }
@@ -101,8 +102,8 @@ class Auth {
         email: user.email,
       },
     };
-
-    return helpers.jwtSign(data);
+    const token = helpers.jwtSign(data);
+    return {...user, token}
   }
 
   static async sendEmailAddressVerificationEmail(email, host) {

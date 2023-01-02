@@ -22,6 +22,22 @@ module.exports = function (sequelize, DataTypes) {
         type: DataTypes.TEXT,
       },
 
+      start_date: {
+        type: DataTypes.DATE,
+      },
+
+      end_date: {
+        type: DataTypes.DATE,
+      },
+
+      reason: {
+        type: DataTypes.TEXT,
+      },
+
+      status: {
+        type: DataTypes.TEXT,
+      },
+
       importHash: {
         type: DataTypes.STRING(255),
         allowNull: true,

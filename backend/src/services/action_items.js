@@ -45,9 +45,9 @@ module.exports = class Action_itemsService {
     const transaction = await db.sequelize.transaction();
 
     try {
-      if (currentUser.role !== 'admin') {
-        throw new ValidationError('errors.forbidden.message');
-      }
+      // if (currentUser.role !== 'admin') {
+      //   throw new ValidationError('errors.forbidden.message');
+      // }
 
       await Action_itemsDBApi.remove(id, {
         currentUser,

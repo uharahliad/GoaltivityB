@@ -65,13 +65,11 @@ const router = express.Router();
  */
 
 router.post('/', async (req, res) => {
-  await GoalsService.create(
+  const payload = await GoalsService.create(
     req.body.data,
-    req.currentUser,
     true,
     req.headers.referer,
   );
-  const payload = true;
   res.status(200).send(payload);
 });
 
@@ -127,7 +125,7 @@ router.post('/', async (req, res) => {
 router.put(
   '/:id',
   wrapAsync(async (req, res) => {
-    await GoalsService.update(req.body.data, req.body.id, req.currentUser);
+    await GoalsService.update(req.body.data, req.params.id, req.currentUser);
     const payload = true;
     res.status(200).send(payload);
   }),
@@ -202,10 +200,11 @@ router.delete(
  */
 
 router.get(
-  '/',
+  '/:author',
   wrapAsync(async (req, res) => {
-    const payload = await GoalsDBApi.findAll(req.query);
-
+    // console.log(req.params, '/////////////////////////////////')
+    const payload = await GoalsDBApi.findAll(req.params);
+    // console.log(payload)
     res.status(200).send(payload);
   }),
 );

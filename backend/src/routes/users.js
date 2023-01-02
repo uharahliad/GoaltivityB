@@ -138,10 +138,11 @@ router.post('/', async (req, res) => {
  */
 
 router.put(
-  '/:id',
+  '/:email',
   wrapAsync(async (req, res) => {
-    await UsersService.update(req.body.data, req.body.id, req.currentUser);
-    const payload = true;
+    console.log(req.params.email, '/////')
+    const payload = await UsersService.update(req.body, req.params.email, req.currentUser);
+    // const payload = true;
     res.status(200).send(payload);
   }),
 );
@@ -180,9 +181,9 @@ router.put(
  */
 
 router.delete(
-  '/:id',
+  '/:email',
   wrapAsync(async (req, res) => {
-    await UsersService.remove(req.params.id, req.currentUser);
+    await UsersService.remove(req.params.email, req.currentUser);
     const payload = true;
     res.status(200).send(payload);
   }),
@@ -269,8 +270,6 @@ router.get(
   '/:id',
   wrapAsync(async (req, res) => {
     const payload = await UsersDBApi.findBy({ id: req.params.id });
-
-    delete payload.password;
 
     res.status(200).send(payload);
   }),

@@ -16,6 +16,20 @@ module.exports = class Success_criteriaService {
       throw error;
     }
   }
+  static async createOne(data, currentUser) {
+    const transaction = await db.sequelize.transaction();
+    try {
+      await Success_criteriaDBApi.createOne(data, {
+        currentUser,
+        transaction,
+      });
+
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
+  }
   static async update(data, id, currentUser) {
     const transaction = await db.sequelize.transaction();
     try {
@@ -45,9 +59,9 @@ module.exports = class Success_criteriaService {
     const transaction = await db.sequelize.transaction();
 
     try {
-      if (currentUser.role !== 'admin') {
-        throw new ValidationError('errors.forbidden.message');
-      }
+      // if (currentUser.role !== 'admin') {
+      //   throw new ValidationError('errors.forbidden.message');
+      // }
 
       await Success_criteriaDBApi.remove(id, {
         currentUser,
