@@ -30,9 +30,9 @@ class Auth {
 
       await UsersDBApi.updatePassword(user.id, hashedPassword, options);
 
-      // if (EmailSender.isConfigured) {
-      //   await this.sendEmailAddressVerificationEmail(user.email, host);
-      // }
+      if (EmailSender.isConfigured) {
+        await this.sendEmailAddressVerificationEmail(user.email, host);
+      }
       const data = {
         user: {
           id: user.id,
@@ -53,9 +53,9 @@ class Auth {
       },
       options,
     );
-    // if (EmailSender.isConfigured) {
-    //   await this.sendEmailAddressVerificationEmail(newUser.email, host);
-    // }
+    if (EmailSender.isConfigured) {
+      await this.sendEmailAddressVerificationEmail(newUser.email, host);
+    }
 
     const data = {
       user: {
@@ -83,13 +83,13 @@ class Auth {
       throw new ValidationError('auth.wrongPassword');
     }
 
-    // if (!EmailSender.isConfigured) {
-    //   user.emailVerified = true;
-    // }
+    if (!EmailSender.isConfigured) {
+      user.emailVerified = true;
+    }
 
-    // if (!user.emailVerified) {
-    //   throw new ValidationError('auth.userNotVerified');
-    // }
+    if (!user.emailVerified) {
+      throw new ValidationError('auth.userNotVerified');
+    }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
     if (!passwordsMatch) {
